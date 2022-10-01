@@ -18,15 +18,23 @@ We have [index.html] file to check everything working. (Open file in browser)
 
 Backend Technology
 - NodeJS
+
+
 Backend Framework
 - Express JS
+
+
 Database
 - MongoDB
+
+
 Frontend Technology
 - HTML
 - CSS
 - Javascript
 - JQuery
+
+
 Frontend Framework
 - Bootstrap
 
