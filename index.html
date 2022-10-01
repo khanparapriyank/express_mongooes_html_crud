@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Product/Flickr Book</title>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<link type='text/css' rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css' />
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+</head>
+<body>
+    <h1>Product/Flickr Book</h1>
+	<hr>
+	<div class="container">
+        <div class="input-group">
+            <form name="createfrom" enctype="multipart/form-data" style="display: flex">
+            <span class="input-group-btn" style="width:0;">
+                <input onclick="onAdd()" id="addNewBtn" type="submit" class="btn btn-success" type="button" value="Add New" style="padding: 7px;">
+                <input style="width: 200px;" type="text" id="search" name="search" class="form-control" placeholder="Flickr Image Search" required>
+                <input type="submit" id="flickrSearch" class="btn btn-default" type="button" value="Go!" style="padding: 7px;">
+                <input type="submit" id="hideBtn" class="btn btn-danger" type="button" value="Back to Product Page" style="padding: 7px;">
+            </span>
+            </form>
+        </div>
+        <hr/>
+        <div id="divFlickr">
+        </div>
+        <div id="divProduct">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Product Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="ProductRow"></tbody>
+            </table>
+        </div>
+    </div>
+    <hr/>
+    <div></div>
+    <div id="addProductDialog" class="w3-modal">
+        <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        <form class="w3-container"  name="createfrom" enctype="multipart/form-data">
+            <div class="w3-section">
+            <label for="pid">Product ID</label>
+            <input class="w3-input w3-border" type="text" id="newpid" placeholder="Product ID" value="" name="pid" required>
+            
+            <label for="name">Product Title</label>
+            <input class="w3-input w3-border" type="text" id="newname" placeholder="Name" value="" name="name" required>
+            
+            <label for="price">Product Price</label>
+            <input class="w3-input w3-border" type=number id="newprice" min=0 step=0.01 name=price value="" placeholder="Price" required>
+            
+            <button style="width: 100px;margin: 0 auto; display: inline;" class="w3-button w3-block w3-blue w3-section w3-padding" type="submit" id="AddNewProduct">Save</button>
+            <button style="width: 100px;margin: 0 auto; display: inline;" onclick="document.getElementById('addProductDialog').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+            </div>
+        </form>
+        </div>
+    </div>
+    <div id="updProductDialog" class="w3-modal">
+        <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+            <form class="w3-container"  name="updatefrom" enctype="multipart/form-data">
+                <div class="w3-section">
+                <label for="pid">Product ID</label>
+                <input class="w3-input w3-border" type="text" id="updpid" placeholder="Product ID" value="<%=item.pid%>" name="pid" readonly>
+                
+                <label for="name">Product Title</label>
+                <input class="w3-input w3-border" type="text" id="updname" placeholder="Name" value="<%=item.name%>" name="name" required>
+                
+                <label for="price">Product Price</label>
+                <input class="w3-input w3-border" type="text" id="updprice" name="price" value="<%=item.price%>"  placeholder="Price" required>
+                
+                <button style="width: 100px;margin: 0 auto; display: inline;" class="w3-button w3-block w3-blue w3-section w3-padding" type="submit" id="UpdNewProduct">Update</button>
+                <button style="width: 100px;margin: 0 auto; display: inline;" onclick="document.getElementById('updProductDialog').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="delProductDialog" class="w3-modal">
+        <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+            <form class="w3-container"  name="updatefrom" enctype="multipart/form-data">
+                <div class="w3-section">
+                <label for="pid">Are You Sure To Delete This Data?</label>
+                <input type="hidden" id="delProductID" value="">
+                <button class="w3-button w3-block w3-green w3-section w3-padding" type="submit" id="delProduct" style="width: 100px;margin: 0 auto; display: inline;">Delete</button>
+                <button onclick="document.getElementById('delProductDialog').style.display='none'" type="button" class="w3-button w3-red" style="width: 100px;margin: 0 auto; display: inline;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script>
+
+async function getProductList() {
+    const urlData = 'http://localhost:3000/';
+	const response = await fetch(urlData,{method: 'GET'});
+    const posts = await response.json();
+    return posts;
+}
+
+async function getProductbyID(productID) {
+    const urlData = 'http://localhost:3000/'+ productID;
+	const response = await fetch(urlData,{method: 'GET'});
+    const posts = await response.json();
+    return posts;
+}
+
+async function addProduct() {
+    var newpid = document.getElementById('newpid').value;
+    var newname = document.getElementById('newname').value;
+    var newprice = document.getElementById('newprice').value;
+    const urlData = 'http://localhost:3000/';
+	const response = await fetch(urlData,{
+        method: "POST",
+        body: JSON.stringify({
+            pid: newpid,
+            name: newname,
+            price: newprice
+        }),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    });
+    const posts = await response.json();
+    return posts;
+}
+
+async function updProduct(productID, productname, productprice) {
+    const urlData = 'http://localhost:3000/update/'+ productID + "?name="+ productname +"&price="+ productprice.toString();
+	const response = await fetch(urlData,{method: "GET"});
+    const posts = await response.json();
+    return posts;
+}
+
+async function delProduct(productID) {
+    const urlData = 'http://localhost:3000/delete/'+ productID;
+	const response = await fetch(urlData,{method: "GET"});
+    const posts = await response.json();
+    return posts;
+}
+
+
+async function getFlickrList() {
+    var searchString = document.getElementById("search").value;
+    const urlData = 'http://localhost:3000/flickr/image?search=' + searchString.toString();
+	const response = await fetch(urlData,{method: 'GET'});
+    const posts = await response.json();
+    return posts;
+}
+
+function get_products() {
+    $("#hideBtn").hide();
+    getProductList().then(nodes => {
+        for(var _index=0; _index < nodes.length; _index++) { 
+            var _node=nodes[_index];
+            $("#ProductRow").append("<tr>\
+                <td>"+ _node.pid +"</td>\
+                <td>"+ _node.name +"</td>\
+                <td>"+ _node.price +"</td>\
+                <td>\
+                    <a onclick='onUpdate(this)' class='btn btn-raised btn-primary'>Update</a>\
+                    <a onclick='onDelete(this)' class='btn btn-raised btn-danger'>Delete</a>\
+                </td>\
+                </td>\
+            </tr>");
+            
+        }
+    });
+}
+
+function onAdd() {
+    document.getElementById('newpid').value= '';
+    document.getElementById('newname').value= '';
+    document.getElementById('newprice').value = '';
+    document.getElementById('addProductDialog').style.display='block';
+}
+
+function onUpdate(a) {
+    selectedRow = a.parentElement.parentElement;
+    document.getElementById('updProductDialog').style.display='block';
+    getProductbyID(selectedRow.cells[0].innerHTML).then(nodes => {
+        document.getElementById('updpid').value = nodes.pid
+        document.getElementById('updname').value = nodes.name
+        document.getElementById('updprice').value = nodes.price
+    });
+}
+
+function onDelete(a) {
+    selectedRow = a.parentElement.parentElement;
+    document.getElementById('delProductDialog').style.display='block';
+    document.getElementById('delProductID').value = selectedRow.cells[0].innerHTML;
+}
+
+$(document).ready(function(){
+    $(function() {
+        $('#flickrSearch').on("click",function(e) {
+            e.preventDefault();
+            
+            $("#divFlickr").show();
+            $("#hideBtn").show();
+            $("#divProduct").hide();
+            $("#addNewBtn").hide();
+            
+            $("#divFlickr").html("");
+            getFlickrList().then(nodes => {
+                for(var _index=0; _index < nodes.length; _index++) { 
+                    var _node=nodes[_index];
+                    $("#divFlickr").append("<span>\
+                        <img src="+ _node.media.m +" alt="+ _node.title +" style='float:left; width:227px; height:150px; background-size:cover;''>\
+                        </span>");
+                }
+            });
+        }); 
+
+        $('#AddNewProduct').on("click",function(e) {
+            e.preventDefault();
+            addProduct();
+            document.getElementById('addProductDialog').style.display='none';
+            $("#ProductRow").html("");
+            setTimeout(() => get_products(), 500)
+        }); 
+
+        $('#UpdNewProduct').on("click",function(e) {
+            e.preventDefault();
+            var updPid = document.getElementById('updpid').value;
+            var updName = document.getElementById('updname').value;
+            var updPrice = document.getElementById('updprice').value;
+            updProduct(updPid, updName, updPrice);
+            document.getElementById('updProductDialog').style.display='none';
+            $("#ProductRow").html("");
+            setTimeout(() => get_products(), 500)
+        }); 
+
+        $('#delProduct').on("click",function(e) {
+            e.preventDefault();
+            delProduct(document.getElementById('delProductID').value);
+            document.getElementById('delProductDialog').style.display='none';
+            $("#ProductRow").html("");
+            setTimeout(() => get_products(), 500)
+        }); 
+
+        $("#hideBtn").click(function(){
+            $("#divFlickr").hide();
+            $("#divProduct").show();
+            $("#addNewBtn").show();
+        });
+       
+    });
+});
+
+get_products();
+
+</script>
+</html>
+
